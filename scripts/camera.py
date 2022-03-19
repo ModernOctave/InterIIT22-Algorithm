@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from time import sleep
 
+
 class camera:
 
 	def __init__(self):
@@ -32,9 +33,10 @@ class camera:
 				cv_image = self.bridge.imgmsg_to_cv2(data, "passthrough")
 			except CvBridgeError as e:
 				print(e)
-			cv_image = -1*cv_image
-			cv_image = cv2.normalize(src=cv_image, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-			cv_image = cv_image.astype(np.uint8)
+			
+			# cv_image = cv_image/30*255
+			# cv_image = cv2.normalize(src=cv_image, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+			# cv_image = cv_image.astype(np.uint8)
 
 			self.depth_img = cv_image
 
@@ -44,16 +46,25 @@ class camera:
 	def get_depth_image(self):
 		return self.depth_img
 
+	def get_norm_depth_image(self):
+		return cv2.normalize(src=-1*self.depth_img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
 	def wait_for_img(self):
 		while self.rgb_img is None or self.depth_img is None:
 			sleep(0.1)
 			print("waiting for image")
+	
+	def get_depth(self):
+		sample_area = self.depth_img[210:270, 280:360]
+		return np.average(sample_area)
 
 
 if __name__ == '__main__':
 	rospy.init_node('camera')
 	cam = camera()
 	while not rospy.is_shutdown():
-		cv2.imshow("Depth Image", cam.get_depth_image())
+		# cv2.imshow("Raw Depth Image", cam.get_depth_image())
+		cv2.imshow("Depth Image", cam.get_norm_depth_image())
 		cv2.imshow("RGB Image", cam.get_rgb_image())
+		print(cam.get_depth())
 		cv2.waitKey(1)

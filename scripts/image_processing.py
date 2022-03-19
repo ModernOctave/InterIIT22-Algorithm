@@ -25,20 +25,22 @@ class image_processing:
         return angle/np.pi*180-90
 
     def get_contours(self, cv_image, road_height, debug=False):
-        margin = 35
+        margin = 1
         mask = cv2.inRange(cv_image, (road_height[0]-margin, road_height[1]-margin, road_height[2]-margin), (road_height[0]+margin, road_height[1]+margin, road_height[2]+margin))
+        # mask = cv2.inRange(cv_image, (17,17,17), (19,19,19))
         if debug:
+            cv2.imshow('input', cv_image)
             cv2.imshow('mask', mask)
         kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.erode(mask, kernel, iterations=45)
-        if debug:
-            cv2.imshow('erroded', mask)
-        mask = cv2.dilate(mask, kernel, iterations=10)
-        if debug:
-            cv2.imshow('dilated', mask)
-        mask = cv2.erode(mask, kernel, iterations=15)
-        if debug:
-            cv2.imshow('erroded2', mask)
+        mask = cv2.erode(mask, kernel, iterations=5)
+        # if debug:
+        #     cv2.imshow('erroded', mask)
+        # mask = cv2.dilate(mask, kernel, iterations=3)
+        # if debug:
+        #     cv2.imshow('dilated', mask)
+        # mask = cv2.erode(mask, kernel, iterations=15)
+        # if debug:
+        #     cv2.imshow('erroded2', mask)
         contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if debug:
             ri = np.copy(cv_image)
@@ -50,12 +52,12 @@ class image_processing:
         print(len(contours))
         return contours[0]
 
-    def get_road_angle(self, cv_image, debug=False):
+    def get_road_angle(self, cv_image, cam, debug=False):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_GRAY2BGR)
         height, width, channels = cv_image.shape
         road_height = []
         for i in range(channels):
-            road_height.append(np.average(cv_image[int(height/2-100):int(height/2+100), int(width/2-20):int(width/2+20),i]))
+            road_height.append(np.average(cv_image[210:270, 280:360]))
 
         contours = self.get_contours(cv_image, road_height)
         contour1 = self.get_contours(cv_image[:240][:], road_height)
@@ -63,23 +65,24 @@ class image_processing:
         centroid1 = self.get_centroid(contour1)
         centroid2 = self.get_centroid(contour2,(0,240))
         angle = self.get_angle(centroid1, centroid2)
-        print('Angle: ', angle)
-        if debug:
-            cv_image = cv2.circle(cv_image, centroid1, radius=1, color=(0, 0, 255), thickness=-1)
-            cv_image = cv2.circle(cv_image, centroid2, radius=1, color=(0, 0, 255), thickness=-1)
-            cv2.drawContours(cv_image, [contours], -1, (0,255,0), 3)
-            cv2.imshow('contours', cv_image)
-        rect = cv2.minAreaRect(contours[0])
-        (x_min, y_min), (w_min, h_min), angle = rect
-        if angle > 0:
-            angle = angle-90
-        else:
-            angle = angle+90
-        if angle < -45:
-            angle = 90 + angle
-        elif angle > 45:
-            angle = -90 + angle
-        cv2.waitKey(0)
+        # print('Angle: ', angle)
+        # if debug:
+        rgb = cam.get_rgb_image()
+        rgb = cv2.circle(rgb, centroid1, radius=2, color=(0, 0, 255), thickness=-1)
+        rgb = cv2.circle(rgb, centroid2, radius=2, color=(0, 0, 255), thickness=-1)
+        cv2.drawContours(rgb, [contours], -1, (0,255,0), 3)
+        cv2.imshow('contours', rgb)
+        # rect = cv2.minAreaRect(contours[0])
+        # (x_min, y_min), (w_min, h_min), angle = rect
+        # if angle > 0:
+        #     angle = angle-90
+        # else:
+        #     angle = angle+90
+        # if angle < -45:
+        #     angle = 90 + angle
+        # elif angle > 45:
+        #     angle = -90 + angle
+        cv2.waitKey(1)
         return angle
 
 def main(args):

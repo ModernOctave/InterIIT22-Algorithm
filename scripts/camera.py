@@ -53,10 +53,6 @@ class camera:
 		while self.rgb_img is None or self.depth_img is None:
 			sleep(0.1)
 			print("waiting for image")
-	
-	def get_depth(self):
-		sample_area = self.depth_img[210:270, 280:360]
-		return np.average(sample_area)
 
 
 if __name__ == '__main__':
@@ -66,5 +62,5 @@ if __name__ == '__main__':
 		# cv2.imshow("Raw Depth Image", cam.get_depth_image())
 		cv2.imshow("Depth Image", cam.get_norm_depth_image())
 		cv2.imshow("RGB Image", cam.get_rgb_image())
-		print(cam.get_depth())
+		# print(cam.get_depth())
 		cv2.waitKey(1)
